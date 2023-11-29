@@ -1558,7 +1558,7 @@ def handle_postback(event):
             print("GHG end, return to status 0")
 
             response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
-            resultList = json.loads(response.text)
+            #resultList = json.loads(response.text)
             print(resultList)
 
             print("使用chat gpt")
