@@ -1550,6 +1550,7 @@ def handle_postback(event):
                 data[data_key] = data_value
 
             print(data)
+            print("test")
 
             response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
             resultList = json.loads(response.text)
