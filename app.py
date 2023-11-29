@@ -1542,12 +1542,24 @@ def handle_postback(event):
             }
             queryData = {}
 
+            temp = 0.0
+
             # update data dict
             for i in range( 1, len(ghgRecord) ):
                 data_key = ghgRecord[i].split('=')[0]
                 data_value = ghgRecord[i].split('=')[1]
                 data[data_key] = data_value
-                queryData[data_key] = data_value
+                #queryData[data_key] = data_value
+                if(data_key == "牛肉"){
+                    temp = temp + (float)data_value * 99.48
+                }
+                elif(data_key == "米飯"){
+                    temp = temp + (float)data_value * 4.45
+                }
+                elif(data_key == "小麥"){
+                    temp = temp + (float)data_value * 1.18
+                }
+
 
             print(data)
 
@@ -1557,9 +1569,9 @@ def handle_postback(event):
             #print(resultList)
             print("GHG end, return to status 0")
 
-            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
+            #response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
             #resultList = json.loads(response.text)
-            print(resultList)
+            #print(resultList)
 
             print("使用chat gpt")
             messages = [
@@ -1567,7 +1579,7 @@ def handle_postback(event):
                 {'role': 'system', 'content': '以下數字為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於節能減碳的評論與建議，限200字以內'}, 
     
                 #提出問題
-                {'role': 'user','content': resultList}
+                {'role': 'user','content': (str)temp}
                 ]
             response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
