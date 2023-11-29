@@ -688,6 +688,7 @@ def handle_text_message(event):
         
         elif status == 23: # GHG emission record
 
+            print("status == 23")
             #ghgRecord = text.split('/')
             #for i in range( 1, len(ghgRecord) ):
                 #if not isNum(ghgRecord.split('=')[1]):
