@@ -1504,6 +1504,8 @@ def handle_postback(event):
                 'recordTime': time
             }
             response = requests.post(config.PHP_SERVER+'mhealth/info/recordInfo.php', data = data)
+            resultList = json.loads(response.text)
+            print(resultList)
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增體溫記錄成功'))
             status = 0
         elif status == 11:
@@ -1550,7 +1552,9 @@ def handle_postback(event):
             print(data)
 
             response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
-            print(response.text)
+            resultList = json.loads(response.text)
+            print(resultList)
+            #print(response.text)
             status = 0
             print("GHG end, return to status 0")
 
