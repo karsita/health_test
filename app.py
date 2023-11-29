@@ -1536,6 +1536,7 @@ def handle_postback(event):
             time = event.postback.params['datetime'] # time
 
             data = {
+                'name': ghgRecord[0],
                 'userID': event.source.user_id,
                 'recordTime': time
             }
@@ -1548,9 +1549,10 @@ def handle_postback(event):
 
             print(data)
 
-            #response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
-            #print(response.text)
-
+            response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
+            print(response.text)
+            status = 0
+            print("GHG end, return to status 0")
 
         elif status == 14:
             diseaseName = event.postback.data.split("@")[1]
