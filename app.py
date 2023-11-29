@@ -1551,13 +1551,13 @@ def handle_postback(event):
                 data[data_key] = data_value
                 #queryData[data_key] = data_value
                 if(data_key == "牛肉"):
-                    temp = temp + float(data_value) * 99.48
+                    temp = temp + float(data_value) / 1000 * 99.48
                 
                 elif(data_key == "米飯"):
-                    temp = temp + float(data_value) * 4.45
+                    temp = temp + float(data_value) / 1000 * 4.45
                 
                 elif(data_key == "小麥"):
-                    temp = temp + float(data_value) * 1.18
+                    temp = temp + float(data_value) / 1000 * 1.18
                 
 
 
