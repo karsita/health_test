@@ -1552,16 +1552,30 @@ def handle_postback(event):
             print(data)
 
             response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增碳排放量記錄成功'))
+            #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增碳排放量記錄成功'))
             #resultList = json.loads(response.text)
             #print(resultList)
             print("GHG end, return to status 0")
 
-            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
+            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
             resultList = json.loads(response.text)
             print(resultList)
 
-
+            print("使用chat gpt")
+            messages = [
+                #賦予人設
+                {'role': 'system', 'content': '以下數字為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於節能減碳的評論與建議，限200字以內'}, 
+    
+                #提出問題
+                {'role': 'user','content': resultList}
+                ]
+            response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+                #max_tokens=128,
+            temperature=0.5,
+            messages=messages)
+            content = response['choices'][0]['message']['content']
+            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='新增碳排放量記錄成功\n'+content.strip()))
 
             status = 0
 
