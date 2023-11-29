@@ -1576,10 +1576,10 @@ def handle_postback(event):
             print("使用chat gpt")
             messages = [
                 #賦予人設
-                {'role': 'system', 'content': '以下數字為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於節能減碳的評論與建議，限200字以內'}, 
+                {'role': 'system', 'content': '以下為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於在飲食的選擇上減少碳排量的評論與建議，限100字以內'}, 
     
                 #提出問題
-                {'role': 'user','content': str(temp)}
+                {'role': 'user','content': str(temp)+"公斤"}
                 ]
             response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
