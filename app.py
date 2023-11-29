@@ -1540,12 +1540,14 @@ def handle_postback(event):
                 'userID': event.source.user_id,
                 'recordTime': time
             }
+            queryData = {}
 
             # update data dict
             for i in range( 1, len(ghgRecord) ):
                 data_key = ghgRecord[i].split('=')[0]
                 data_value = ghgRecord[i].split('=')[1]
                 data[data_key] = data_value
+                queryData[data_key] = data_value
 
             print(data)
 
@@ -1553,8 +1555,15 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增碳排放量記錄成功'))
             #resultList = json.loads(response.text)
             #print(resultList)
-            status = 0
             print("GHG end, return to status 0")
+
+            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
+            resultList = json.loads(response.text)
+            print(resultList)
+
+
+
+            status = 0
 
         elif status == 14:
             diseaseName = event.postback.data.split("@")[1]
