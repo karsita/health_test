@@ -337,16 +337,21 @@ def handle_text_message(event):
         ])    
         status = 20
     elif text =="飲食順序建議":
-            line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text='請輸入您欲食用的食物名稱')
-            ])    
-            status = 21
+        line_bot_api.reply_message(event.reply_token, [
+            TextSendMessage(text='請輸入您欲食用的食物名稱')
+        ])    
+        status = 21
     elif text =="運動記錄規劃":
-            line_bot_api.reply_message(event.reply_token, [
-                TextSendMessage(text='請輸入您的運動目標及運動種類 (如:一周消耗5000卡、跑步)：')
-            ])    
-            status = 22        
-    
+        line_bot_api.reply_message(event.reply_token, [
+            TextSendMessage(text='請輸入您的運動目標及運動種類 (如:一周消耗5000卡、跑步)：')
+        ])    
+        status = 22        
+    # 暫時性測試用text，之後會改成網頁端liff
+    elif text =="飲食碳排放量記錄":
+        line_bot_api.reply_message(event.reply_token, [
+            TextSendMessage(text='請輸入您食用的食物名，與各項食材克數 (如:牛排飯/牛肉=120/米飯=200)：')
+        ])    
+        status = 23  
 
     elif text == '查詢紀錄': #查訊紀錄
         buttons_template = ButtonsTemplate(title='查詢紀錄', text='query record', actions=[
@@ -681,6 +686,21 @@ def handle_text_message(event):
             content = response['choices'][0]['message']['content']
             line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content.strip()))    
         
+        elif status == 23: # GHG emission record
+
+            #ghgRecord = text.split('/')
+            #for i in range( 1, len(ghgRecord) ):
+                #if not isNum(ghgRecord.split('=')[1]):
+                    #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='格式錯誤，請重新輸入'))
+            
+            buttons_template = ButtonsTemplate(title='選擇時間',text='time',actions=[
+                DatetimePickerAction(label='日期時間',data=text,mode='datetime'),
+                PostbackAction(label='取消',data='/cancel')
+            ])
+            template_message = TemplateSendMessage(alt_text='Button alt text',template=buttons_template)
+            line_bot_api.reply_message(event.reply_token, template_message)
+            
+
         elif status == 3: # water intake
             if not isNum(text):
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text='格式錯誤，請重新輸入'))
@@ -1504,6 +1524,33 @@ def handle_postback(event):
                     PostbackAction(label='取消',data='/cancel')])
             template_message2 = TemplateSendMessage(alt_text='新增記錄確認', template=confirm_template)
             line_bot_api.reply_message(event.reply_token, [template_message,template_message2])
+            #沒加到?
+            #status = 0
+
+        elif status == 23: # GHG emission
+
+            # ex: data = "牛排飯/牛肉=120/米飯=200"
+            # ex: ghgRecord = ["牛排飯", "牛肉=120", "米飯=200"]
+            ghgRecord = event.postback.data.split('/')
+            time = event.postback.params['datetime'] # time
+
+            data = {
+                'userID': event.source.user_id,
+                'recordTime': time
+            }
+
+            # update data dict
+            for i in range( 1, len(ghgRecord) ):
+                data_key = ghgRecord[i].split('=')[0]
+                data_value = ghgRecord[i].split('=')[1]
+                data[data_key] = data_value
+
+            print(data)
+
+            #response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
+            #print(response.text)
+
+
         elif status == 14:
             diseaseName = event.postback.data.split("@")[1]
             if diseaseName == 'cancel':
