@@ -717,23 +717,32 @@ def handle_text_message(event):
                 else:
                     entity_value[entity_name.index(ghgRecord[i].split('=')[0])] +=  ghgRecord[i].split('=')[1]
 
+            print(entity_name)
+            print(entity_value)
+
+            
+            # 開始查詢資料庫
             data = {'Entity' : entity_name}
             response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
             # ex: [99.48, 1.57]
             entity_emission = {item['GHG_emissions_per_kilogram'] for item in json.loads(response.text)}
-
+            print(entity_emission)
+            
             # 有無效 Entity (資料庫找不到)
             if len(entity_emission) != len(entity_name):
                 line_bot_api.reply_message(event.reply_token,TextSendMessage(text='請輸入有效的食材'))
+                print("資料庫找不到")
             
             # Entity 皆有效
             else:
+                print("皆有效")
                 eneity_string = ""
                 totalGHG = 0.0
                 
                 for i in range( 0, len(entity_name) ):
                     eneity_string = eneity_string + entity_name[i]+str(entity_value[i])+"公克、"
                     totalGHG = totalGHG + float(entity_value[i]) / 1000 * entity_emission[i]
+                    print(eneity_string)
                 
                 print(eneity_string)
                 print("使用chat gpt")
