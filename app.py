@@ -346,7 +346,6 @@ def handle_text_message(event):
             TextSendMessage(text='請輸入您的運動目標及運動種類 (如:一周消耗5000卡、跑步)：')
         ])    
         status = 22        
-        ######temp
     elif text =="飲食碳排放量計算":
         line_bot_api.reply_message(event.reply_token, [
             TextSendMessage(text='請輸入您欲計算的各項食材克數 (如:牛肉=120/米飯=200)：'),
@@ -688,22 +687,7 @@ def handle_text_message(event):
             line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content.strip()))    
         
         elif status == 23: # GHG emission record
-
-
-            #ghgRecord = text.split('/')
-            #for i in range( 1, len(ghgRecord) ):
-                #if not isNum(ghgRecord.split('=')[1]):
-                    #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='格式錯誤，請重新輸入'))
-            
-#            buttons_template = ButtonsTemplate(title='選擇時間',text='time',actions=[
-#                DatetimePickerAction(label='日期時間',data=text,mode='datetime'),
-#                PostbackAction(label='取消',data='/cancel')
-#            ])
-#            template_message = TemplateSendMessage(alt_text='Button alt text',template=buttons_template)
-#            line_bot_api.reply_message(event.reply_token, template_message)
-
-
-            
+           
             print("status == 23")
             # ex: 牛肉=200/小麥=100
             ghgRecord = event.message.text.split('/')
@@ -713,7 +697,7 @@ def handle_text_message(event):
             for i in range( 0, len(ghgRecord) ):
                 if i not in entity_name:
                     entity_name.append(ghgRecord[i].split('=')[0])
-                    entity_value.append(ghgRecord[i].split('=')[1])
+                    entity_value.append(float(ghgRecord[i].split('=')[1]))
                 else:
                     entity_value[entity_name.index(ghgRecord[i].split('=')[0])] +=  ghgRecord[i].split('=')[1]
 
@@ -731,8 +715,11 @@ def handle_text_message(event):
                 
                 if response == '':
                     print("none")
-                    
-                entity_emission.append(item['GHG_emissions_per_kilogram'] for item in json.loads(response.text))
+
+                print(json.loads(response.text))
+                print(type(json.loads(response.text)))
+                
+                entity_emission.append( float(json.loads(response.text)['GHG_emissions_per_kilogram']) )
                 print(entity_emission)
             
             # 有無效 Entity (資料庫找不到)
@@ -1597,69 +1584,6 @@ def handle_postback(event):
             line_bot_api.reply_message(event.reply_token, [template_message,template_message2])
             #沒加到?
             #status = 0
-
-#        elif status == 23: # GHG emission
-
-            # ex: data = "牛排飯/牛肉=120/米飯=200"
-            # ex: ghgRecord = ["牛排飯", "牛肉=120", "米飯=200"]
-#            ghgRecord = event.postback.data.split('/')
-#            time = event.postback.params['datetime'] # time
-
-#            data = {
-#                'mealName': ghgRecord[0],
-#                'userID': event.source.user_id,
-#                'recordTime': time
-#            }
-#            queryData = {}
-
-#            temp = 0.0
-
-            # update data dict
-#            for i in range( 1, len(ghgRecord) ):
-#                data_key = ghgRecord[i].split('=')[0]
-#                data_value = ghgRecord[i].split('=')[1]
-#                data[data_key] = data_value
-#                #queryData[data_key] = data_value
-#                if(data_key == "牛肉"):
-#                    temp = temp + float(data_value) / 1000 * 99.48
-#                
-#                elif(data_key == "米飯"):
-#                    temp = temp + float(data_value) / 1000 * 4.45
-#                
-#                elif(data_key == "小麥"):
-#                    temp = temp + float(data_value) / 1000 * 1.18
-#                
-
-
-#            print(data)
-
-#            response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
-            #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增碳排放量記錄成功'))
-            #resultList = json.loads(response.text)
-            #print(resultList)
-#            print("GHG end, return to status 0")
-
-            #response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
-            #resultList = json.loads(response.text)
-            #print(resultList)
-
-#            print("使用chat gpt")
-#            messages = [
-                #賦予人設
-#                {'role': 'system', 'content': '以下為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於在飲食的選擇上減少碳排量的評論與建議，限100字以內'}, 
-    
-#                #提出問題
-#                {'role': 'user','content': str(temp)+"公斤"}
-#                ]
-#            response = openai.ChatCompletion.create(
-#            model="gpt-3.5-turbo",
-#                #max_tokens=128,
-#            temperature=0.5,
-#            messages=messages)
-#            content = response['choices'][0]['message']['content']
-#            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='新增碳排放量記錄成功\n'+content.strip()))
-
-#            status = 0
 
         elif status == 14:
             diseaseName = event.postback.data.split("@")[1]
