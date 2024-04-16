@@ -140,6 +140,7 @@ rA = 'A. 大部分坐著'
 rB = 'B. 多為三十分內的走動'
 rC = 'C. 規律運動且超過三十分'
 rD = 'D. 每次超過一小時劇烈運動'
+GHG_emission_database_entity_list = ['米飯', '小麥', '大麥', '麥片', '玉米', '馬鈴薯', '木薯', '甜菜糖', '蔗糖', '牛肉', '豬肉', '羊肉', '禽肉', '養殖魚', '養殖蝦', '蛋', '起司', '豆腐', '花生', '豌豆', '其他豆類', '高麗菜', '番茄', '洋蔥、韭菜', '其他蔬菜', '蘋果', '香蕉', '莓果、葡萄', '柑橘類水果', '其他水果', '咖啡', '牛奶', '豆漿', '葡萄酒', '黑巧克力', '堅果']
 
 # the model of clarifai , [0] for TW , [1] for EN
 # (Deprecated)
@@ -349,7 +350,7 @@ def handle_text_message(event):
     elif text =="飲食碳排放量計算":
         line_bot_api.reply_message(event.reply_token, [
             TextSendMessage(text='請輸入您欲計算的各項食材克數 (如:牛肉=120/米飯=200)：'),
-            TextSendMessage(text='以下為可輸入的食材名稱')
+            TextSendMessage(text='以下為可輸入的食材名稱\n<<澱粉、醣類>>\n米飯\n小麥\n大麥\n麥片\n玉米\n馬鈴薯\n木薯\n甜菜糖\n蔗糖\n<<蛋白質類>>\n牛肉\n豬肉\n羊肉\n禽肉\n養殖魚\n養殖蝦\n蛋\n起司\n豆腐\n花生\n豌豆\n其他豆類\n<<蔬菜類>>\n高麗菜\n番茄\n洋蔥、韭菜\n其他蔬菜\n<<水果類>>\n蘋果\n香蕉\n莓果、葡萄\n柑橘類水果\n其他水果\n<<飲品>>\n咖啡\n牛奶\n豆漿\n葡萄酒\n<<其他>>\n黑巧克力\n堅果')
         ])    
         status = 23  
 
@@ -689,53 +690,37 @@ def handle_text_message(event):
         elif status == 23: # GHG emission record
            
             print("status == 23")
+            emi_empty_flag = 0
+            
             # ex: 牛肉=200/小麥=100
             ghgRecord = event.message.text.split('/')
             entity_name = []    # ex: [牛肉, 小麥]
             entity_value = []   # ex: [200, 100]
             
             for i in range( 0, len(ghgRecord) ):
-                if i not in entity_name:
+                if ghgRecord[i] not in GHG_emission_database_entity_list:
+                    emi_empty_flag = 1
+                    break
+                if ghgRecord[i] not in entity_name:
                     entity_name.append(ghgRecord[i].split('=')[0])
                     entity_value.append(float(ghgRecord[i].split('=')[1]))
                 else:
-                    entity_value[entity_name.index(ghgRecord[i].split('=')[0])] +=  ghgRecord[i].split('=')[1]
+                    entity_value[entity_name.index(ghgRecord[i].split('=')[0])] += float(ghgRecord[i].split('=')[1])
 
-            print(entity_name)
-            print(entity_value)
-# ----------------------------------------------------------------
-            
-            # 開始查詢資料庫
-            entity_emission = []    # ex: [99.48, 1.57]
-            emi_empty_flag = 0
-            
-            for i in range( 0, len(entity_name) ):
-                data = {'Entity' : entity_name[i]}
-                response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
-                print(response)
-                
-                if response == '':
-                    print("none")
-
-                print(json.loads(response.text))
-                print(type(json.loads(response.text)))
-                result = json.loads(response.text)
-                if response == []:
-                    print("none")
-                    emi_empty_flag = 1
-                    break
-                
-                entity_emission.append( float(json.loads(response.text)[0]['GHG_emissions_per_kilogram']) )
-                print(entity_emission)
             
             # 有無效 Entity (資料庫找不到)
             if emi_empty_flag == 1:
                 line_bot_api.reply_message(event.reply_token,TextSendMessage(text='請輸入有效的食材'))
-                print("資料庫找不到")
             
             # Entity 皆有效
             else:
-                print("皆有效")
+                # 開始查詢資料庫
+                entity_emission = []    # ex: [99.48, 1.57]
+                for i in range( 0, len(entity_name) ):
+                    data = {'Entity' : entity_name[i]}
+                    response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
+                    entity_emission.append( float(json.loads(response.text)[0]['GHG_emissions_per_kilogram']) )
+                    
                 eneity_string = ""
                 totalGHG = 0.0
                 
@@ -761,7 +746,7 @@ def handle_text_message(event):
                     temperature=0.5,
                     messages=messages)
                 content = response['choices'][0]['message']['content']
-                line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content.strip()))
+                line_bot_api.reply_message(event.reply_token,TextSendMessage(text="碳排放量總共"+str(totalGHG)+"公斤\n"+content.strip()))
 
             emi_empty_flag = 0
             status = 0  
