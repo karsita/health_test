@@ -346,10 +346,11 @@ def handle_text_message(event):
             TextSendMessage(text='請輸入您的運動目標及運動種類 (如:一周消耗5000卡、跑步)：')
         ])    
         status = 22        
-    # 暫時性測試用text，之後會改成網頁端liff
-    elif text =="飲食碳排放量記錄":
+        ######temp
+    elif text =="飲食碳排放量計算":
         line_bot_api.reply_message(event.reply_token, [
-            TextSendMessage(text='請輸入您食用的食物名，與各項食材克數 (如:牛排飯/牛肉=120/米飯=200)：')
+            TextSendMessage(text='請輸入您欲計算的各項食材克數 (如:牛肉=120/米飯=200)：'),
+            TextSendMessage(text='以下為可輸入的食材名稱')
         ])    
         status = 23  
 
@@ -688,19 +689,72 @@ def handle_text_message(event):
         
         elif status == 23: # GHG emission record
 
-            print("status == 23")
+
             #ghgRecord = text.split('/')
             #for i in range( 1, len(ghgRecord) ):
                 #if not isNum(ghgRecord.split('=')[1]):
                     #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='格式錯誤，請重新輸入'))
             
-            buttons_template = ButtonsTemplate(title='選擇時間',text='time',actions=[
-                DatetimePickerAction(label='日期時間',data=text,mode='datetime'),
-                PostbackAction(label='取消',data='/cancel')
-            ])
-            template_message = TemplateSendMessage(alt_text='Button alt text',template=buttons_template)
-            line_bot_api.reply_message(event.reply_token, template_message)
+#            buttons_template = ButtonsTemplate(title='選擇時間',text='time',actions=[
+#                DatetimePickerAction(label='日期時間',data=text,mode='datetime'),
+#                PostbackAction(label='取消',data='/cancel')
+#            ])
+#            template_message = TemplateSendMessage(alt_text='Button alt text',template=buttons_template)
+#            line_bot_api.reply_message(event.reply_token, template_message)
+
+
             
+            print("status == 23")
+            # ex: 牛肉=200/小麥=100
+            ghgRecord = event.message.text.split('/')
+            entity_name = []    # ex: [牛肉, 小麥]
+            entity_value = []   # ex: [200, 100]
+            
+            for i in range( 0, len(ghgRecord) ):
+                if i not in entity_name:
+                    entity_name.append(ghgRecord[i].split('=')[0])
+                    entity_value.append(ghgRecord[i].split('=')[1])
+                else:
+                    entity_value[entity_name.index(ghgRecord[i].split('=')[0])] +=  ghgRecord[i].split('=')[1]
+
+            data = {'Entity' : entity_name}
+            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
+            # ex: [99.48, 1.57]
+            entity_emission = {item['GHG_emissions_per_kilogram'] for item in json.loads(response.text)}
+
+            # 有無效 Entity (資料庫找不到)
+            if len(entity_emission) != len(entity_name):
+                line_bot_api.reply_message(event.reply_token,TextSendMessage(text='請輸入有效的食材'))
+            
+            # Entity 皆有效
+            else:
+                eneity_string = ""
+                totalGHG = 0.0
+                
+                for i in range( 0, len(entity_name) ):
+                    eneity_string = eneity_string + entity_name[i]+str(entity_value[i])+"公克、"
+                    totalGHG = totalGHG + float(entity_value[i]) / 1000 * entity_emission[i]
+                
+                print(eneity_string)
+                print("使用chat gpt")
+    
+                messages = [
+                    #賦予人設
+                    {'role': 'system', 'content': '以下為吃一餐的食材與消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於在食材的選擇上減少碳排量的評論與建議，限100字以內'}, 
+        
+                    #提出問題 ([:-1]是要去掉最後的頓號)
+                    {'role': 'user','content': "食用了"+eneity_string[:-1]+"，碳排放量總共"+str(totalGHG)+"公斤"}
+                    ]
+                    
+                response = openai.ChatCompletion.create(
+                    model="gpt-4-turbo-preview",
+                    #max_tokens=128,
+                    temperature=0.5,
+                    messages=messages)
+                content = response['choices'][0]['message']['content']
+                line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content.strip()))
+            
+            status = 0  
 
         elif status == 3: # water intake
             if not isNum(text):
@@ -1528,68 +1582,68 @@ def handle_postback(event):
             #沒加到?
             #status = 0
 
-        elif status == 23: # GHG emission
+#        elif status == 23: # GHG emission
 
             # ex: data = "牛排飯/牛肉=120/米飯=200"
             # ex: ghgRecord = ["牛排飯", "牛肉=120", "米飯=200"]
-            ghgRecord = event.postback.data.split('/')
-            time = event.postback.params['datetime'] # time
+#            ghgRecord = event.postback.data.split('/')
+#            time = event.postback.params['datetime'] # time
 
-            data = {
-                'mealName': ghgRecord[0],
-                'userID': event.source.user_id,
-                'recordTime': time
-            }
-            queryData = {}
+#            data = {
+#                'mealName': ghgRecord[0],
+#                'userID': event.source.user_id,
+#                'recordTime': time
+#            }
+#            queryData = {}
 
-            temp = 0.0
+#            temp = 0.0
 
             # update data dict
-            for i in range( 1, len(ghgRecord) ):
-                data_key = ghgRecord[i].split('=')[0]
-                data_value = ghgRecord[i].split('=')[1]
-                data[data_key] = data_value
-                #queryData[data_key] = data_value
-                if(data_key == "牛肉"):
-                    temp = temp + float(data_value) / 1000 * 99.48
-                
-                elif(data_key == "米飯"):
-                    temp = temp + float(data_value) / 1000 * 4.45
-                
-                elif(data_key == "小麥"):
-                    temp = temp + float(data_value) / 1000 * 1.18
-                
+#            for i in range( 1, len(ghgRecord) ):
+#                data_key = ghgRecord[i].split('=')[0]
+#                data_value = ghgRecord[i].split('=')[1]
+#                data[data_key] = data_value
+#                #queryData[data_key] = data_value
+#                if(data_key == "牛肉"):
+#                    temp = temp + float(data_value) / 1000 * 99.48
+#                
+#                elif(data_key == "米飯"):
+#                    temp = temp + float(data_value) / 1000 * 4.45
+#                
+#                elif(data_key == "小麥"):
+#                    temp = temp + float(data_value) / 1000 * 1.18
+#                
 
 
-            print(data)
+#            print(data)
 
-            response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
+#            response = requests.post(config.PHP_SERVER+'mhealth/recordGHG.php', data = data)
             #line_bot_api.reply_message(event.reply_token, TextSendMessage(text='新增碳排放量記錄成功'))
             #resultList = json.loads(response.text)
             #print(resultList)
-            print("GHG end, return to status 0")
+#            print("GHG end, return to status 0")
 
             #response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = queryData)
             #resultList = json.loads(response.text)
             #print(resultList)
 
-            print("使用chat gpt")
-            messages = [
+#            print("使用chat gpt")
+#            messages = [
                 #賦予人設
-                {'role': 'system', 'content': '以下為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於在飲食的選擇上減少碳排量的評論與建議，限100字以內'}, 
+#                {'role': 'system', 'content': '以下為吃一餐消耗的碳排放量，請判斷該碳排放量的多寡，並給予關於在飲食的選擇上減少碳排量的評論與建議，限100字以內'}, 
     
-                #提出問題
-                {'role': 'user','content': str(temp)+"公斤"}
-                ]
-            response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-                #max_tokens=128,
-            temperature=0.5,
-            messages=messages)
-            content = response['choices'][0]['message']['content']
-            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='新增碳排放量記錄成功\n'+content.strip()))
+#                #提出問題
+#                {'role': 'user','content': str(temp)+"公斤"}
+#                ]
+#            response = openai.ChatCompletion.create(
+#            model="gpt-3.5-turbo",
+#                #max_tokens=128,
+#            temperature=0.5,
+#            messages=messages)
+#            content = response['choices'][0]['message']['content']
+#            line_bot_api.reply_message(event.reply_token,TextSendMessage(text='新增碳排放量記錄成功\n'+content.strip()))
 
-            status = 0
+#            status = 0
 
         elif status == 14:
             diseaseName = event.postback.data.split("@")[1]
