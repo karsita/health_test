@@ -732,7 +732,7 @@ def handle_text_message(event):
                 if response == '':
                     print("none")
                     
-                entity_emission.append({item['GHG_emissions_per_kilogram'] for item in json.loads(response.text)})
+                entity_emission.append(item['GHG_emissions_per_kilogram'] for item in json.loads(response.text))
                 print(entity_emission)
             
             # 有無效 Entity (資料庫找不到)
@@ -748,7 +748,7 @@ def handle_text_message(event):
                 
                 for i in range( 0, len(entity_name) ):
                     eneity_string = eneity_string + entity_name[i]+str(entity_value[i])+"公克、"
-                    totalGHG = totalGHG + float(entity_value[i]) / 1000 * entity_emission[i]
+                    totalGHG = totalGHG + float(entity_value[i]) / 1000 * float(entity_emission[i])
                     print(eneity_string)
                 
                 print(eneity_string)
