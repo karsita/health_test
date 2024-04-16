@@ -350,7 +350,7 @@ def handle_text_message(event):
     elif text =="飲食碳排放量計算":
         line_bot_api.reply_message(event.reply_token, [
             TextSendMessage(text='請輸入您欲計算的各項食材克數 (如:牛肉=120/米飯=200)：'),
-            TextSendMessage(text='以下為可輸入的食材名稱\n<<澱粉、醣類>>\n米飯\n小麥\n大麥\n麥片\n玉米\n馬鈴薯\n木薯\n甜菜糖\n蔗糖\n<<蛋白質類>>\n牛肉\n豬肉\n羊肉\n禽肉\n養殖魚\n養殖蝦\n蛋\n起司\n豆腐\n花生\n豌豆\n其他豆類\n<<蔬菜類>>\n高麗菜\n番茄\n洋蔥、韭菜\n其他蔬菜\n<<水果類>>\n蘋果\n香蕉\n莓果、葡萄\n柑橘類水果\n其他水果\n<<飲品>>\n咖啡\n牛奶\n豆漿\n葡萄酒\n<<其他>>\n黑巧克力\n堅果')
+            TextSendMessage(text='以下為可輸入的食材名稱\n<<====澱粉、醣類====>>\n米飯\n小麥\n大麥\n麥片\n玉米\n馬鈴薯\n木薯\n甜菜糖\n蔗糖\n<<=====蛋白質類=====>>\n牛肉\n豬肉\n羊肉\n禽肉\n養殖魚\n養殖蝦\n蛋\n起司\n豆腐\n花生\n豌豆\n其他豆類\n<<======蔬菜類======>>\n高麗菜\n番茄\n洋蔥、韭菜\n其他蔬菜\n<<======水果類======>>\n蘋果\n香蕉\n莓果、葡萄\n柑橘類水果\n其他水果\n<<=======飲品=======>>\n咖啡\n牛奶\n豆漿\n葡萄酒\n<<=======其他=======>>\n黑巧克力\n堅果')
         ])    
         status = 23  
 
@@ -694,11 +694,11 @@ def handle_text_message(event):
             
             # ex: 牛肉=200/小麥=100
             ghgRecord = event.message.text.split('/')
-            entity_name = []    # ex: [牛肉, 小麥]
+            entity_name = []    # ex: ['牛肉', '小麥']
             entity_value = []   # ex: [200, 100]
             
             for i in range( 0, len(ghgRecord) ):
-                if ghgRecord[i] not in GHG_emission_database_entity_list:
+                if ghgRecord[i].split('=')[0] not in GHG_emission_database_entity_list:
                     emi_empty_flag = 1
                     break
                 if ghgRecord[i] not in entity_name:
