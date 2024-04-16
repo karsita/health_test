@@ -707,6 +707,7 @@ def handle_text_message(event):
             
             # 開始查詢資料庫
             entity_emission = []    # ex: [99.48, 1.57]
+            emi_empty_flag = 0
             
             for i in range( 0, len(entity_name) ):
                 data = {'Entity' : entity_name[i]}
@@ -718,12 +719,17 @@ def handle_text_message(event):
 
                 print(json.loads(response.text))
                 print(type(json.loads(response.text)))
+                result = json.loads(response.text)
+                if response == []:
+                    print("none")
+                    emi_empty_flag = 1
+                    break
                 
-                entity_emission.append( float(json.loads(response.text)['GHG_emissions_per_kilogram']) )
+                entity_emission.append( float(json.loads(response.text)[0]['GHG_emissions_per_kilogram']) )
                 print(entity_emission)
             
             # 有無效 Entity (資料庫找不到)
-            if len(entity_emission) != len(entity_name):
+            if emi_empty_flag == 1:
                 line_bot_api.reply_message(event.reply_token,TextSendMessage(text='請輸入有效的食材'))
                 print("資料庫找不到")
             
@@ -756,7 +762,8 @@ def handle_text_message(event):
                     messages=messages)
                 content = response['choices'][0]['message']['content']
                 line_bot_api.reply_message(event.reply_token,TextSendMessage(text=content.strip()))
-            
+
+            emi_empty_flag = 0
             status = 0  
 
         elif status == 3: # water intake
