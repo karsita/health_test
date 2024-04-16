@@ -719,14 +719,21 @@ def handle_text_message(event):
 
             print(entity_name)
             print(entity_value)
-
+# ----------------------------------------------------------------
             
             # 開始查詢資料庫
-            data = {'Entity' : entity_name}
-            response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
-            # ex: [99.48, 1.57]
-            entity_emission = {item['GHG_emissions_per_kilogram'] for item in json.loads(response.text)}
-            print(entity_emission)
+            entity_emission = []    # ex: [99.48, 1.57]
+            
+            for i in range( 0, len(entity_name) ):
+                data = {'Entity' : entity_name[i]}
+                response = requests.post(config.PHP_SERVER+'mhealth/queryGHG.php', data = data)
+                print(response)
+                
+                if response == '':
+                    print("none")
+                    
+                entity_emission.append({item['GHG_emissions_per_kilogram'] for item in json.loads(response.text)})
+                print(entity_emission)
             
             # 有無效 Entity (資料庫找不到)
             if len(entity_emission) != len(entity_name):
